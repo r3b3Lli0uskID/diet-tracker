@@ -123,6 +123,16 @@ export default function SettingsPage() {
                 </div>
               )}
             </div>
+            <Separator className="my-3" />
+            <div className="rounded-lg bg-amber-50 p-3">
+              <p className="text-xs font-semibold text-amber-800">Important Notice</p>
+              <p className="mt-1 text-xs leading-relaxed text-amber-700">
+                All data is stored locally on this device. Your entries, photos, and profile are saved in your browser&apos;s storage and are not uploaded to any server.
+              </p>
+              <p className="mt-2 text-xs leading-relaxed text-amber-700">
+                Clearing your browser cache, site data, or cookies will <span className="font-semibold">permanently delete all your records</span>. We recommend using the <span className="font-semibold">Download Backup</span> feature in the Export tab regularly to keep a copy of your data.
+              </p>
+            </div>
           </CardContent>
         </Card>
 
