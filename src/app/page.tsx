@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
   Heart,
@@ -348,9 +349,43 @@ function RecentEntries({ entries }: { readonly entries: readonly DailyEntry[] })
   );
 }
 
+function SplashScreen({ onDone }: { readonly onDone: () => void }) {
+  const [fading, setFading] = useState(false);
+
+  useEffect(() => {
+    const fadeTimer = setTimeout(() => setFading(true), 2200);
+    const doneTimer = setTimeout(() => onDone(), 2800);
+    return () => {
+      clearTimeout(fadeTimer);
+      clearTimeout(doneTimer);
+    };
+  }, [onDone]);
+
+  return (
+    <div
+      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-b from-teal-600 to-teal-700 transition-opacity duration-500 ${
+        fading ? "opacity-0" : "opacity-100"
+      }`}
+    >
+      <img
+        src="/clinic-logo.jpg"
+        alt="All Derma Medical Clinic"
+        className="mb-6 size-24 rounded-full border-3 border-white/30 object-cover shadow-xl"
+      />
+      <h1 className="mb-1 text-2xl font-bold text-white">DietTracker</h1>
+      <p className="text-sm text-white/70">All Derma Medical Clinic</p>
+      <p className="mt-6 text-xs text-white/40">
+        Created by{" "}
+        <span className="underline">IvanThan</span>
+      </p>
+    </div>
+  );
+}
+
 export default function HomePage() {
   const { profile, isLoading: profileLoading } = useProfile();
   const { entries, isLoading: entriesLoading } = useEntries();
+  const [showSplash, setShowSplash] = useState(true);
   const todayDate = today();
   const weekStart = getWeekStart();
   const todayEntry = entries.find((e) => e.date === todayDate);
@@ -361,6 +396,8 @@ export default function HomePage() {
     if (entry.weightKg !== null && latest === null) return entry.weightKg;
     return latest;
   }, null);
+
+  const handleSplashDone = useCallback(() => setShowSplash(false), []);
 
   if (profileLoading) {
     return (
@@ -373,6 +410,7 @@ export default function HomePage() {
   if (!profile) {
     return (
       <main className="flex flex-1 flex-col pb-20">
+        {showSplash && <SplashScreen onDone={handleSplashDone} />}
         <WelcomeCard />
         <BottomNav />
       </main>
@@ -381,6 +419,7 @@ export default function HomePage() {
 
   return (
     <main className="flex flex-1 flex-col pb-20">
+      {showSplash && <SplashScreen onDone={handleSplashDone} />}
       <div className="mx-auto w-full max-w-lg px-4 py-6">
         <div className="mb-6">
           <p className="text-sm text-muted-foreground">{getGreeting()},</p>

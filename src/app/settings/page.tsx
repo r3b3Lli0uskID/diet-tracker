@@ -10,6 +10,9 @@ import {
   Trash2,
   ChevronRight,
   AlertTriangle,
+  Phone,
+  MessageCircle,
+  Globe,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -143,6 +146,26 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Clinic</span>
                 <span className="text-sm font-medium">All Derma Medical Clinic</span>
+              </div>
+              <Separator className="my-3" />
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Contact</p>
+              <div className="space-y-2">
+                <a href="tel:+6562380979" className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-teal-600">
+                  <Phone className="size-3.5" />
+                  +65 6238 0979
+                </a>
+                <a href="https://wa.me/6598364006" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-teal-600">
+                  <MessageCircle className="size-3.5" />
+                  +65 9836 4006 (WhatsApp)
+                </a>
+                <a href="https://www.instagram.com/alldermaofficial/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-teal-600">
+                  <Globe className="size-3.5" />
+                  @alldermaofficial
+                </a>
+                <a href="https://www.facebook.com/alldermamedicalclinic" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-teal-600">
+                  <Globe className="size-3.5" />
+                  Facebook
+                </a>
               </div>
             </div>
           </CardContent>
