@@ -363,18 +363,18 @@ function SplashScreen({ onDone }: { readonly onDone: () => void }) {
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-b from-teal-600 to-teal-700 transition-opacity duration-500 ${
+      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-white transition-opacity duration-500 ${
         fading ? "opacity-0" : "opacity-100"
       }`}
     >
       <img
         src="/clinic-logo.jpg"
         alt="All Derma Medical Clinic"
-        className="mb-6 size-24 rounded-full border-3 border-white/30 object-cover shadow-xl"
+        className="mb-6 size-24 rounded-full border-2 border-teal-200 object-cover shadow-lg"
       />
-      <h1 className="mb-1 text-2xl font-bold text-white">DietTracker</h1>
-      <p className="text-sm text-white/70">All Derma Medical Clinic</p>
-      <p className="mt-6 text-xs text-white/40">
+      <h1 className="mb-1 text-2xl font-bold text-teal-700">DietTracker</h1>
+      <p className="text-sm text-muted-foreground">All Derma Medical Clinic</p>
+      <p className="mt-6 text-xs text-muted-foreground/50">
         Created by{" "}
         <span className="underline">IvanThan</span>
       </p>
