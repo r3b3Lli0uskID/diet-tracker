@@ -20,6 +20,12 @@ function formatNum(val: number | null): string {
   return val !== null ? String(val) : "";
 }
 
+function formatDateReadable(date: string): string {
+  const [y, m, d] = date.split("-");
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  return `${parseInt(d)} ${months[parseInt(m) - 1]} ${y}`;
+}
+
 interface GeneratePdfOptions {
   readonly profile: PatientProfile | null;
   readonly entries: readonly DailyEntry[];
@@ -34,24 +40,30 @@ export function generateDietPdf({
   toDate,
 }: GeneratePdfOptions): void {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-
   const pageWidth = doc.internal.pageSize.getWidth();
 
-  // Header
-  doc.setFontSize(14);
+  // ── Clinic Header ──
+  doc.setFontSize(16);
   doc.setFont("helvetica", "bold");
-  doc.text("ALL DERMA MEDICAL CLINIC", pageWidth / 2, 12, { align: "center" });
+  doc.text("ALL DERMA MEDICAL CLINIC", pageWidth / 2, 14, { align: "center" });
 
   doc.setFontSize(11);
   doc.setFont("helvetica", "normal");
-  doc.text("DIET TRACKING SHEET", pageWidth / 2, 18, { align: "center" });
+  doc.text("DIET TRACKING SHEET", pageWidth / 2, 21, { align: "center" });
 
-  // Patient info block
+  // ── Thin line under header ──
+  doc.setDrawColor(0, 128, 128);
+  doc.setLineWidth(0.5);
+  doc.line(14, 24, pageWidth - 14, 24);
+
+  // ── Patient Info Block ──
+  let infoEndY = 30;
+
   if (profile) {
     doc.setFontSize(8);
     const leftX = 14;
     const rightX = pageWidth / 2 + 10;
-    let y = 25;
+    let y = 30;
 
     const leftFields: readonly [string, string][] = [
       ["Name", profile.name],
@@ -63,8 +75,8 @@ export function generateDietPdf({
 
     const rightFields: readonly [string, string][] = [
       ["Sex", profile.sex],
-      ["Allergy", profile.allergy],
-      ["C/O", profile.co],
+      ["Allergy", profile.allergy || "NIL"],
+      ["C/O", profile.co || "-"],
       ["TEL", profile.tel],
     ];
 
@@ -76,29 +88,34 @@ export function generateDietPdf({
         doc.setFont("helvetica", "bold");
         doc.text(`${label}:`, leftX, y);
         doc.setFont("helvetica", "normal");
-        doc.text(truncate(value, 50), leftX + 20, y);
+        doc.text(truncate(value, 50), leftX + 22, y);
       }
       if (i < rightFields.length) {
         const [label, value] = rightFields[i];
         doc.setFont("helvetica", "bold");
         doc.text(`${label}:`, rightX, y);
         doc.setFont("helvetica", "normal");
-        doc.text(truncate(value, 50), rightX + 20, y);
+        doc.text(truncate(value, 50), rightX + 22, y);
       }
-      y += 4;
+      y += 5;
     }
+
+    infoEndY = y;
   }
 
-  // Date range subtitle
-  const tableStartY = profile ? 48 : 25;
-  doc.setFontSize(8);
-  doc.setFont("helvetica", "italic");
-  doc.text(`Period: ${fromDate} to ${toDate}`, 14, tableStartY - 2);
+  // ── Period line (with clear spacing) ──
+  const periodY = infoEndY + 4;
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "bold");
+  doc.text("Period:", 14, periodY);
+  doc.setFont("helvetica", "normal");
+  doc.text(`${formatDateReadable(fromDate)}  —  ${formatDateReadable(toDate)}`, 32, periodY);
 
-  // Sort entries chronologically for the PDF
+  // ── Table ──
+  const tableStartY = periodY + 5;
+
   const sortedEntries = [...entries].sort((a, b) => a.date.localeCompare(b.date));
 
-  // Table data
   const tableHead = [
     [
       "DATE",
@@ -140,7 +157,7 @@ export function generateDietPdf({
     theme: "grid",
     styles: {
       fontSize: 7,
-      cellPadding: 1.5,
+      cellPadding: 2,
       overflow: "linebreak",
       lineWidth: 0.2,
     },
