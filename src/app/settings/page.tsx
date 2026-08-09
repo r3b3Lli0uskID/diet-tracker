@@ -30,6 +30,7 @@ import {
 import { PageHeader } from "@/components/layout/PageHeader";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { db } from "@/lib/db/database";
+import packageJson from "../../../package.json";
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
@@ -151,7 +152,7 @@ export default function SettingsPage() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Version</span>
-                <span className="text-sm font-medium">1.0.0</span>
+                <span className="text-sm font-medium">{packageJson.version}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Clinic</span>
