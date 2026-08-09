@@ -268,12 +268,19 @@ function EntryFormContent({ date: initialDate }: EntryFormContentProps) {
   const { entry: dbEntry, saveEntry, isLoading } = useEntry(currentDate);
   const [local, setLocal] = useState<DailyEntry | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  // Mirrors `local` synchronously so scheduleAutosave/flush can read the latest
+  // edit without depending on React's setState batching timing.
+  const localRef = useRef<DailyEntry | null>(null);
+  // Holds the latest edit that hasn't been confirmed persisted yet.
+  const pendingRef = useRef<DailyEntry | null>(null);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
   // Sync local state when DB entry loads (new date or first load)
   useEffect(() => {
     if (dbEntry && (!local || local.date !== currentDate)) {
       setLocal(dbEntry);
+      localRef.current = dbEntry;
+      pendingRef.current = null;
       setSaveStatus("idle");
     }
   }, [dbEntry, currentDate, local]);
@@ -283,11 +290,24 @@ function EntryFormContent({ date: initialDate }: EntryFormContentProps) {
       setSaveStatus("saving");
       try {
         await saveEntry(data);
+        // Only clear pendingRef if a newer edit hasn't arrived while this save was in flight
+        if (pendingRef.current === data) {
+          pendingRef.current = null;
+        }
         setSaveStatus("saved");
         setTimeout(() => setSaveStatus((s) => (s === "saved" ? "idle" : s)), 2000);
-      } catch {
-        toast.error("Failed to save");
-        setSaveStatus("idle");
+      } catch (err) {
+        setSaveStatus("error");
+        const msg = err instanceof Error ? err.message : "Failed to save";
+        toast.error(msg, {
+          duration: Infinity,
+          action: {
+            label: "Back Up Now",
+            onClick: () => {
+              window.location.href = "/export";
+            },
+          },
+        });
       }
     },
     [saveEntry]
@@ -295,48 +315,94 @@ function EntryFormContent({ date: initialDate }: EntryFormContentProps) {
 
   const scheduleAutosave = useCallback(
     (updated: DailyEntry) => {
+      pendingRef.current = updated;
       if (debounceRef.current) clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(() => doSave(updated), 1500);
+      debounceRef.current = setTimeout(() => doSave(updated), 600);
     },
     [doSave]
   );
 
+  // Flushes any unsaved edit immediately — used when the app is about to be
+  // backgrounded/suspended, since the debounce timer alone can't be trusted
+  // to survive that. Blurring the active element first commits an
+  // in-progress numeric field, which otherwise only commits on blur.
+  const flushPendingSave = useCallback(() => {
+    (document.activeElement as HTMLElement | null)?.blur();
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
+    if (pendingRef.current) {
+      doSave(pendingRef.current);
+    }
+  }, [doSave]);
+
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "hidden") flushPendingSave();
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("pagehide", flushPendingSave);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("pagehide", flushPendingSave);
+    };
+  }, [flushPendingSave]);
+
   const updateMeal = useCallback(
     (mealKey: "breakfast" | "lunch" | "dinner", meal: MealEntry) => {
-      setLocal((prev) => {
-        if (!prev) return prev;
-        const updated = { ...prev, [mealKey]: meal };
-        scheduleAutosave(updated);
-        return updated;
-      });
+      const prev = localRef.current;
+      if (!prev) return;
+      const updated = { ...prev, [mealKey]: meal };
+      localRef.current = updated;
+      setLocal(updated);
+      scheduleAutosave(updated);
     },
     [scheduleAutosave]
   );
 
   const updateField = useCallback(
     <K extends keyof DailyEntry>(field: K, value: DailyEntry[K]) => {
-      setLocal((prev) => {
-        if (!prev) return prev;
-        const updated = { ...prev, [field]: value };
-        scheduleAutosave(updated);
-        return updated;
-      });
+      const prev = localRef.current;
+      if (!prev) return;
+      const updated = { ...prev, [field]: value };
+      localRef.current = updated;
+      setLocal(updated);
+      scheduleAutosave(updated);
     },
     [scheduleAutosave]
   );
 
   const navigateToDate = useCallback(
     async (targetDate: string) => {
-      // Flush pending save
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
         debounceRef.current = null;
       }
-      if (local) {
-        await saveEntry(local);
+      const toSave = pendingRef.current ?? local;
+      if (toSave) {
+        try {
+          await saveEntry(toSave);
+          pendingRef.current = null;
+        } catch (err) {
+          setSaveStatus("error");
+          const msg = err instanceof Error ? err.message : "Failed to save";
+          toast.error(msg, {
+            duration: Infinity,
+            action: {
+              label: "Back Up Now",
+              onClick: () => {
+                window.location.href = "/export";
+              },
+            },
+          });
+          // Don't navigate away from an unsaved edit
+          return;
+        }
       }
       // Switch date — triggers useEntry for new date
       setLocal(null);
+      localRef.current = null;
       setCurrentDate(targetDate);
       // Update URL without full page navigation
       window.history.replaceState(null, "", `/entry/${targetDate}`);
@@ -384,6 +450,12 @@ function EntryFormContent({ date: initialDate }: EntryFormContentProps) {
             <p className="flex items-center justify-center gap-1 text-xs text-teal-600">
               <Check className="size-3" />
               Saved
+            </p>
+          )}
+          {saveStatus === "error" && (
+            <p className="flex items-center justify-center gap-1 text-xs font-medium text-red-600">
+              <X className="size-3" />
+              Not saved
             </p>
           )}
         </div>

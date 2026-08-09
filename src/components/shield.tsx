@@ -10,7 +10,7 @@ export function Shield() {
 
     // Disable text selection
     document.documentElement.style.userSelect = "none";
-    (document.documentElement.style as Record<string, string>).webkitUserSelect = "none";
+    (document.documentElement.style as unknown as Record<string, string>).webkitUserSelect = "none";
 
     // Block keyboard shortcuts
     const onKeydown = (e: KeyboardEvent) => {

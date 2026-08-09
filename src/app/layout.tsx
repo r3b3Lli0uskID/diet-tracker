@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { Shield } from "@/components/shield";
+import { StorageGuardian } from "@/components/storage-guardian";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -49,6 +50,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col bg-background">
         <Shield />
+        <StorageGuardian />
         {children}
         <Toaster position="top-center" richColors closeButton />
       </body>

@@ -2,13 +2,18 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { db } from "@/lib/db/database";
-import { saveEntry as saveEntryRepo } from "@/lib/db/entry-repo";
+import {
+  saveEntry as saveEntryRepo,
+  classifyDbError,
+  dbErrorMessage,
+} from "@/lib/db/entry-repo";
 import { createEmptyEntry } from "@/lib/db/types";
 import type { DailyEntry } from "@/lib/db/types";
+import { logFailure } from "@/lib/diagnostics/failure-log";
 
 interface UseEntryReturn {
   readonly entry: DailyEntry | null;
-  readonly saveEntry: (entry: DailyEntry) => Promise<void>;
+  readonly saveEntry: (entry: DailyEntry) => Promise<DailyEntry>;
   readonly isLoading: boolean;
 }
 
@@ -53,7 +58,7 @@ export function useEntry(date: string): UseEntryReturn {
           setIsLoading(false);
         }
       } catch (err) {
-        console.error("useEntry load failed:", err);
+        logFailure("useEntry.load", err);
         // Create in-memory entry so the form still works
         if (!cancelled) {
           setEntry(createEmptyEntry(date));
@@ -70,13 +75,16 @@ export function useEntry(date: string): UseEntryReturn {
   }, [date]);
 
   const saveEntry = useCallback(
-    async (updated: DailyEntry): Promise<void> => {
+    async (updated: DailyEntry): Promise<DailyEntry> => {
       try {
-        await saveEntryRepo(updated);
+        const persisted = await saveEntryRepo(updated);
+        setEntry(persisted);
+        return persisted;
       } catch (err) {
-        console.error("saveEntry failed:", err);
+        const kind = classifyDbError(err);
+        logFailure("useEntry.save", err, kind);
+        throw new Error(dbErrorMessage(kind));
       }
-      setEntry(updated);
     },
     []
   );
