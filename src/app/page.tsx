@@ -64,11 +64,9 @@ import { useProfile } from "@/hooks/useProfile";
 import { useEntries } from "@/hooks/useEntries";
 import { today, formatDate } from "@/lib/utils/date";
 import { importFromJson } from "@/lib/backup/import-json";
+import { isMealLogged } from "@/lib/db/entry-helpers";
+import { BackupNudgeBanner } from "@/components/backup-nudge-banner";
 import type { DailyEntry, MealEntry } from "@/lib/db/types";
-
-function isMealLogged(meal: MealEntry): boolean {
-  return meal.isNil || meal.description.trim().length > 0 || meal.photoBlob !== null;
-}
 
 // Myanmar (incl. Extended-A/B) Unicode blocks
 const MYANMAR_SCRIPT = /[က-႟ꧠ-꧿ꩠ-ꩿ]/;
@@ -479,6 +477,7 @@ export default function HomePage() {
   return (
     <main className="flex flex-1 flex-col pb-20">
       {showSplash && <SplashScreen onDone={handleSplashDone} />}
+      <BackupNudgeBanner entries={entries} entriesLoading={entriesLoading} />
       <div className="mx-auto w-full max-w-lg px-4 py-6">
         <div className="mb-6">
           <p className="text-sm text-muted-foreground">{getGreeting(profile.name)},</p>

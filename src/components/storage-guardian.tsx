@@ -8,6 +8,16 @@ import { logFailure } from "@/lib/diagnostics/failure-log";
 const DISMISS_KEY = "dt-storage-banner-dismissed";
 const OUTCOME_KEY = "dt-storage-persisted";
 
+// Only one home-page banner should show at a time — the storage-denied
+// warning takes priority over the backup-nudge banner (see BackupNudgeBanner).
+export function isStorageBannerShowing(): boolean {
+  if (typeof window === "undefined") return false;
+  return (
+    localStorage.getItem(OUTCOME_KEY) === "denied" &&
+    localStorage.getItem(DISMISS_KEY) !== "1"
+  );
+}
+
 function getAddToHomeScreenCopy(): string {
   const ua = navigator.userAgent;
   const isIOS = /iPad|iPhone|iPod/.test(ua) && !("MSStream" in window);

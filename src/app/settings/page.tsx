@@ -13,6 +13,7 @@ import {
   Phone,
   MessageCircle,
   Globe,
+  BookOpen,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -101,6 +102,28 @@ export default function SettingsPage() {
               </div>
               <ChevronRight className="size-4 text-muted-foreground" />
             </Link>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-sm">
+          <CardContent className="py-1">
+            <a
+              href="/DietTracker-User-Guide.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 py-3 transition-colors"
+            >
+              <div className="flex size-9 items-center justify-center rounded-full bg-teal-50">
+                <BookOpen className="size-4 text-teal-600" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium">User Guide</p>
+                <p className="text-xs text-muted-foreground">
+                  How to use the app, with pictures — download or print
+                </p>
+              </div>
+              <ChevronRight className="size-4 text-muted-foreground" />
+            </a>
           </CardContent>
         </Card>
 

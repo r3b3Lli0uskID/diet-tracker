@@ -21,6 +21,7 @@ import { useEntries } from "@/hooks/useEntries";
 import { useProfile } from "@/hooks/useProfile";
 import { exportAllData, backupViaShareOrDownload } from "@/lib/backup/export-json";
 import { importFromJson } from "@/lib/backup/import-json";
+import { recordBackupNow } from "@/lib/backup/backup-reminder";
 import { generateDietPdf } from "@/lib/pdf/generate-pdf";
 
 function getCurrentMonthRange(): { start: string; end: string } {
@@ -56,11 +57,13 @@ export default function ExportPage() {
         `diettracker-backup-${timestamp}.json`
       );
       if (outcome === "shared") {
+        recordBackupNow();
         toast.success("Backup shared successfully");
       } else if (outcome === "downloaded") {
+        recordBackupNow();
         toast.success("Backup downloaded successfully");
       }
-      // "cancelled" — patient backed out of the share sheet, nothing to report
+      // "cancelled" — patient backed out of the share sheet, nothing to record
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : "Export failed";
       toast.error(msg);
