@@ -188,26 +188,30 @@ function WelcomeCard() {
         </a>
       </div>
 
-      <Button
-        className="h-12 rounded-xl bg-teal-600 px-8 text-base font-semibold text-white hover:bg-teal-700"
-        nativeButton={false}
-        render={<Link href="/profile" />}
-      >
-        <Sparkles className="size-5" />
-        Get Started
-      </Button>
+      <div className="flex w-full max-w-xs flex-col gap-3">
+        <Button
+          className="h-12 w-full rounded-xl bg-teal-600 text-base font-semibold text-white hover:bg-teal-700"
+          nativeButton={false}
+          render={<Link href="/profile" />}
+        >
+          <Sparkles className="size-5" />
+          Get Started
+        </Button>
 
-      <button
-        type="button"
-        onClick={() => fileInputRef.current?.click()}
-        disabled={restoring}
-        className="mt-4 flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-teal-600 disabled:opacity-60"
-      >
-        <RotateCcw className="size-3.5" />
-        {restoring
-          ? "Restoring..."
-          : "Used DietTracker before? Restore your backup"}
-      </button>
+        <Button
+          variant="outline"
+          className="h-12 w-full rounded-xl border-2 border-teal-300 bg-teal-50/50 text-base font-semibold text-teal-700 hover:bg-teal-100"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={restoring}
+        >
+          <RotateCcw className="size-5" />
+          {restoring ? "Restoring..." : "Restore from Backup"}
+        </Button>
+      </div>
+      <p className="mt-2 max-w-xs text-center text-xs text-muted-foreground">
+        Used DietTracker before, or set up on another phone? Tap Restore to
+        bring back your saved records.
+      </p>
       <input
         ref={fileInputRef}
         type="file"
