@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import {
   Heart,
   CalendarPlus,
@@ -16,6 +17,7 @@ import {
   Phone,
   MessageCircle,
   Globe,
+  RotateCcw,
 } from "lucide-react";
 
 function InstagramIcon({ className }: { readonly className?: string }) {
@@ -61,6 +63,7 @@ import { BottomNav } from "@/components/layout/BottomNav";
 import { useProfile } from "@/hooks/useProfile";
 import { useEntries } from "@/hooks/useEntries";
 import { today, formatDate } from "@/lib/utils/date";
+import { importFromJson } from "@/lib/backup/import-json";
 import type { DailyEntry, MealEntry } from "@/lib/db/types";
 
 function isMealLogged(meal: MealEntry): boolean {
@@ -86,6 +89,39 @@ function getWeekStart(): string {
 }
 
 function WelcomeCard() {
+  const [restoring, setRestoring] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleRestoreFile = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      setRestoring(true);
+      try {
+        const text = await file.text();
+        const count = await importFromJson(text);
+        toast.success(
+          count > 0
+            ? `Restored ${count} ${count === 1 ? "day" : "days"} of records`
+            : "Backup restored"
+        );
+      } catch (error: unknown) {
+        const msg =
+          error instanceof Error
+            ? error.message
+            : "Could not restore this backup file";
+        toast.error(msg);
+      } finally {
+        setRestoring(false);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+      }
+    },
+    []
+  );
+
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-6 py-12">
       <img
@@ -160,6 +196,25 @@ function WelcomeCard() {
         <Sparkles className="size-5" />
         Get Started
       </Button>
+
+      <button
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={restoring}
+        className="mt-4 flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-teal-600 disabled:opacity-60"
+      >
+        <RotateCcw className="size-3.5" />
+        {restoring
+          ? "Restoring..."
+          : "Used DietTracker before? Restore your backup"}
+      </button>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json"
+        className="hidden"
+        onChange={handleRestoreFile}
+      />
 
       <p className="mt-8 text-xs text-muted-foreground">
         Created by{" "}
