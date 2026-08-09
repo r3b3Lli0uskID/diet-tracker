@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist } from "next/font/google";
+import { Geist, Noto_Sans_Myanmar } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { Shield } from "@/components/shield";
 import { StorageGuardian } from "@/components/storage-guardian";
@@ -8,6 +8,16 @@ import "./globals.css";
 const geistSans = Geist({
   variable: "--font-sans",
   subsets: ["latin"],
+});
+
+// Self-hosted at build time (next/font downloads + inlines it) so Burmese
+// input renders consistently without a runtime request to Google Fonts —
+// the CSP has no font-src/style-src allowance for that origin on purpose.
+const notoSansMyanmar = Noto_Sans_Myanmar({
+  variable: "--font-myanmar",
+  subsets: ["myanmar"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
 export const viewport: Viewport = {
@@ -41,13 +51,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} h-full antialiased`}>
-      <head>
-        <link
-          href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${notoSansMyanmar.variable} h-full antialiased`}
+    >
       <body className="min-h-full flex flex-col bg-background">
         <Shield />
         <StorageGuardian />

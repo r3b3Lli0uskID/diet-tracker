@@ -19,7 +19,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { useEntries } from "@/hooks/useEntries";
 import { useProfile } from "@/hooks/useProfile";
-import { exportAllData, downloadJson } from "@/lib/backup/export-json";
+import { exportAllData, backupViaShareOrDownload } from "@/lib/backup/export-json";
 import { importFromJson } from "@/lib/backup/import-json";
 import { generateDietPdf } from "@/lib/pdf/generate-pdf";
 
@@ -51,8 +51,16 @@ export default function ExportPage() {
     try {
       const json = await exportAllData();
       const timestamp = new Date().toISOString().split("T")[0];
-      downloadJson(json, `diettracker-backup-${timestamp}.json`);
-      toast.success("Backup downloaded successfully");
+      const outcome = await backupViaShareOrDownload(
+        json,
+        `diettracker-backup-${timestamp}.json`
+      );
+      if (outcome === "shared") {
+        toast.success("Backup shared successfully");
+      } else if (outcome === "downloaded") {
+        toast.success("Backup downloaded successfully");
+      }
+      // "cancelled" — patient backed out of the share sheet, nothing to report
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : "Export failed";
       toast.error(msg);
@@ -84,7 +92,7 @@ export default function ExportPage() {
     []
   );
 
-  const handleGeneratePdf = useCallback(() => {
+  const handleGeneratePdf = useCallback(async () => {
     if (entries.length === 0) {
       toast.error("No entries in the selected date range");
       return;
@@ -92,7 +100,7 @@ export default function ExportPage() {
 
     setGeneratingPdf(true);
     try {
-      generateDietPdf({
+      await generateDietPdf({
         profile: profile ?? null,
         entries,
         fromDate,

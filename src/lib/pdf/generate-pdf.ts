@@ -2,6 +2,18 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { DailyEntry, PatientProfile } from "@/lib/db/types";
 
+const MYANMAR_FONT = "NotoSansMyanmar";
+
+// jsPDF's built-in fonts (Helvetica/Times/Courier) have no Myanmar glyphs, so any
+// Burmese text a patient recorded would silently drop from the PDF. Noto Sans
+// Myanmar also covers basic Latin, so it's used for every data field (not just
+// ones detected as Burmese) rather than switching fonts per-cell.
+async function registerMyanmarFont(doc: jsPDF): Promise<void> {
+  const { notoSansMyanmarBase64 } = await import("./fonts/noto-sans-myanmar-base64");
+  doc.addFileToVFS(`${MYANMAR_FONT}.ttf`, notoSansMyanmarBase64);
+  doc.addFont(`${MYANMAR_FONT}.ttf`, MYANMAR_FONT, "normal");
+}
+
 function truncate(text: string, maxLen: number): string {
   if (text.length <= maxLen) return text;
   return text.slice(0, maxLen - 1) + "\u2026";
@@ -33,13 +45,14 @@ interface GeneratePdfOptions {
   readonly toDate: string;
 }
 
-export function generateDietPdf({
+export async function generateDietPdf({
   profile,
   entries,
   fromDate,
   toDate,
-}: GeneratePdfOptions): void {
+}: GeneratePdfOptions): Promise<void> {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+  await registerMyanmarFont(doc);
   const pageWidth = doc.internal.pageSize.getWidth();
 
   // ── Clinic Header ──
@@ -87,14 +100,14 @@ export function generateDietPdf({
         const [label, value] = leftFields[i];
         doc.setFont("helvetica", "bold");
         doc.text(`${label}:`, leftX, y);
-        doc.setFont("helvetica", "normal");
+        doc.setFont(MYANMAR_FONT, "normal");
         doc.text(truncate(value, 50), leftX + 22, y);
       }
       if (i < rightFields.length) {
         const [label, value] = rightFields[i];
         doc.setFont("helvetica", "bold");
         doc.text(`${label}:`, rightX, y);
-        doc.setFont("helvetica", "normal");
+        doc.setFont(MYANMAR_FONT, "normal");
         doc.text(truncate(value, 50), rightX + 22, y);
       }
       y += 5;
@@ -167,6 +180,13 @@ export function generateDietPdf({
       fontSize: 7,
       fontStyle: "bold",
       halign: "center",
+    },
+    // Column labels (DATE, BKFST, ...) are always English — keep the default
+    // Helvetica head font. Body rows hold patient-entered free text, which may
+    // be Burmese, so they get the embedded Myanmar font (which also covers
+    // basic Latin, so English entries render fine too).
+    bodyStyles: {
+      font: MYANMAR_FONT,
     },
     columnStyles: {
       0: { cellWidth: 20 },

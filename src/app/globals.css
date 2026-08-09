@@ -105,11 +105,12 @@ html {
   }
 }
 
-/* Burmese font support for inputs and textareas */
+/* Burmese font support for inputs and textareas — self-hosted via next/font,
+   see --font-myanmar in layout.tsx (no runtime request, CSP-compliant) */
 input,
 textarea,
 select {
-  font-family: "Noto Sans Myanmar", "Padauk", "Myanmar Text", system-ui, sans-serif;
+  font-family: var(--font-myanmar), "Padauk", "Myanmar Text", system-ui, sans-serif;
 }
 
 /* Custom scrollbar */

@@ -8,9 +8,22 @@ import { logFailure } from "@/lib/diagnostics/failure-log";
 const DISMISS_KEY = "dt-storage-banner-dismissed";
 const OUTCOME_KEY = "dt-storage-persisted";
 
+function getAddToHomeScreenCopy(): string {
+  const ua = navigator.userAgent;
+  const isIOS = /iPad|iPhone|iPod/.test(ua) && !("MSStream" in window);
+  if (isIOS) {
+    return "Add DietTracker to your Home Screen (Share → Add to Home Screen)";
+  }
+  if (/Android/.test(ua)) {
+    return "Add DietTracker to your Home Screen (menu → Add to Home Screen / Install app)";
+  }
+  return "Install DietTracker as an app (browser menu → Add to Home Screen / Install)";
+}
+
 export function StorageGuardian() {
   const pathname = usePathname();
   const [showBanner, setShowBanner] = useState(false);
+  const [addToHomeScreenCopy, setAddToHomeScreenCopy] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -28,6 +41,7 @@ export function StorageGuardian() {
         if (cancelled) return;
         localStorage.setItem(OUTCOME_KEY, granted ? "granted" : "denied");
         if (!granted && localStorage.getItem(DISMISS_KEY) !== "1") {
+          setAddToHomeScreenCopy(getAddToHomeScreenCopy());
           setShowBanner(true);
         }
       } catch (err) {
@@ -55,9 +69,9 @@ export function StorageGuardian() {
       <div className="flex-1 text-xs leading-relaxed">
         <p className="font-semibold">Keep your records safe</p>
         <p className="mt-1">
-          On iPhone, add DietTracker to your Home Screen (Share → Add to Home
-          Screen) and download a backup regularly from the Export tab — this
-          protects your data if the browser ever clears its storage.
+          {addToHomeScreenCopy} and download a backup regularly from the
+          Export tab — this protects your data if the browser ever clears its
+          storage.
         </p>
       </div>
       <button

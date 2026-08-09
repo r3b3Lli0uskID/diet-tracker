@@ -83,5 +83,46 @@ export function downloadJson(jsonString: string, filename: string): void {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  // Revoking immediately after click() is a known cause of aborted downloads
+  // on some browsers (the click is queued, not synchronous) — give it a beat.
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+export type BackupDeliveryOutcome = "shared" | "cancelled" | "downloaded";
+
+/**
+ * iOS Safari's `download` attribute on blob: URLs is unreliable, so a plain
+ * downloadJson() call can silently fail there. Where the Web Share API with a
+ * files payload is available, route through the OS share sheet instead — the
+ * patient picks Files/iCloud/Drive/etc. directly, which is both more reliable
+ * and (per PDPA review) creates no new data-processing relationship, since the
+ * app never transmits the file itself. Falls back to downloadJson() anywhere
+ * Web Share isn't available (desktop browsers, older WebViews).
+ */
+export async function backupViaShareOrDownload(
+  jsonString: string,
+  filename: string
+): Promise<BackupDeliveryOutcome> {
+  const blob = new Blob([jsonString], { type: "application/json" });
+  const file = new File([blob], filename, { type: "application/json" });
+
+  const canShareFile =
+    typeof navigator.share === "function" &&
+    typeof navigator.canShare === "function" &&
+    navigator.canShare({ files: [file] });
+
+  if (canShareFile) {
+    try {
+      await navigator.share({ files: [file], title: "DietTracker Backup" });
+      return "shared";
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") {
+        return "cancelled";
+      }
+      // Any other share failure falls through to the download path below.
+    }
+  }
+
+  downloadJson(jsonString, filename);
+  return "downloaded";
 }
