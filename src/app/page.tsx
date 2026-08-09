@@ -67,11 +67,11 @@ function isMealLogged(meal: MealEntry): boolean {
   return meal.isNil || meal.description.trim().length > 0 || meal.photoBlob !== null;
 }
 
-function getGreeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 17) return "Good afternoon";
-  return "Good evening";
+// Myanmar (incl. Extended-A/B) Unicode blocks
+const MYANMAR_SCRIPT = /[က-႟ꧠ-꧿ꩠ-ꩿ]/;
+
+function getGreeting(name: string): string {
+  return MYANMAR_SCRIPT.test(name) ? "Mingalar Par" : "Welcome";
 }
 
 function getWeekStart(): string {
@@ -422,7 +422,7 @@ export default function HomePage() {
       {showSplash && <SplashScreen onDone={handleSplashDone} />}
       <div className="mx-auto w-full max-w-lg px-4 py-6">
         <div className="mb-6">
-          <p className="text-sm text-muted-foreground">{getGreeting()},</p>
+          <p className="text-sm text-muted-foreground">{getGreeting(profile.name)},</p>
           <h1 className="text-xl font-bold text-foreground">{profile.name}</h1>
         </div>
 

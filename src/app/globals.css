@@ -105,11 +105,10 @@ html {
   }
 }
 
-/* Burmese font support for inputs and textareas — self-hosted via next/font,
-   see --font-myanmar in layout.tsx (no runtime request, CSP-compliant) */
-input,
-textarea,
-select {
+/* Burmese font support — scoped to meal description fields only (the rest of
+   the app is short labels/names where the system font's own Myanmar fallback
+   is enough). Self-hosted via next/font, see --font-myanmar in layout.tsx. */
+.font-myanmar {
   font-family: var(--font-myanmar), "Padauk", "Myanmar Text", system-ui, sans-serif;
 }
 

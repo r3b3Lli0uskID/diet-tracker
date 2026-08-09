@@ -195,7 +195,7 @@ function MealSection({ title, icon: Icon, meal, onUpdate }: MealSectionProps) {
             onChange={(e) =>
               onUpdate({ ...meal, description: e.target.value })
             }
-            className="min-h-20 rounded-xl"
+            className="min-h-20 rounded-xl font-myanmar"
           />
         </CardContent>
       )}
